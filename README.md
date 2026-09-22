@@ -421,7 +421,7 @@ Voting Application
 
 ![Running Application on AKS](AZ-Screens/14-final-application.png)
 *(احفظ صورة Argo CD التي تظهر الـ Pods وهي تعمل `Running` باسم `14-final-application.png`)*
-```
+
 
 
 ## Architecture
@@ -433,3 +433,4 @@ Voting Application
 * A [.NET](/worker/) worker which consumes votes and stores them in…
 * A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
 * A [Node.js](/result) web app which shows the results of the voting in real time
+```
