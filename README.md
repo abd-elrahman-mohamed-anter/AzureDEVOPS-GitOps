@@ -147,13 +147,56 @@ vote-app/
 └── seed-data/
 ```
 
-The pipeline is configured to run when changes are made inside the `vote/` directory.
+The pipeline is configured to run when changes are made inside the `vote/` directory, and runs on a self-hosted agent pool.
 
 ```yaml
 trigger:
   paths:
     include:
       - vote/*
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: '<service-connection-id>'
+  imageRepository: 'voteapp'
+  containerRegistry: 'azurecicdcontreg.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/vote/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+pool:
+  name: 'myazureagent'
+
+stages:
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+    - task: Docker@2
+      displayName: Build image
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'build'
+        Dockerfile: 'vote/Dockerfile'
+        tags: '$(tag)'
+
+- stage: Push
+  displayName: Push
+  jobs:
+  - job: Push
+    displayName: Push
+    steps:
+    - task: Docker@2
+      displayName: push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'push'
+        tags: '$(tag)'
 ```
 
 ![Azure DevOps Repository](AZ-Screens/02-azure-devops-repository.png)
@@ -199,13 +242,31 @@ With the AKS cluster, ACR, and CI stages in place, the pipeline was triggered fo
 
 # 5. Update Stage — Update Kubernetes Manifest
 
-After the pipeline was confirmed working, the **Update** stage was added. It runs the Bash script:
+After the pipeline was confirmed working, the **Update** stage was added, depending on the `Push` stage:
 
-```text
-scripts/updateK8sManifests.sh
+```yaml
+- stage: Update
+  displayName: Update
+  dependsOn: Push
+  condition: succeeded()
+  jobs:
+  - job: Update
+    displayName: Update Kubernetes manifest
+    steps:
+
+    - script: |
+        sed -i 's/\r$//' scripts/updateK8sManifests.sh
+      displayName: Convert CRLF to LF
+
+    - task: Bash@3
+      displayName: Update Kubernetes manifest
+      inputs:
+        targetType: 'filePath'
+        filePath: 'scripts/updateK8sManifests.sh'
+        arguments: 'vote $(imageRepository) $(tag)'
 ```
 
-The script receives three arguments:
+The `scripts/updateK8sManifests.sh` script receives three arguments:
 
 ```text
 $1 = application name    (vote)
@@ -213,11 +274,37 @@ $2 = image repository    (voteapp)
 $3 = image tag           (Build.BuildId)
 ```
 
-Example call:
+```bash
+#!/bin/bash
+echo "========== SCRIPT STARTED =========="
+echo "ARG1=$1"
+echo "ARG2=$2"
+echo "ARG3=$3"
+set -x
 
-```text
-vote voteapp 17
+# Set the repository URL
+REPO_URL="https://<PAT>@dev.azure.com/<org>/vote-app/_git/vote-app"
+
+# Clone the git repository
+git clone "$REPO_URL" /tmp/temp_repo
+cd /tmp/temp_repo
+
+echo "Before:"
+grep "image:" k8s-specifications/$1-deployment.yaml
+
+sed -i "s|image:.*|image: azurecicdcontreg.azurecr.io/$2:$3|g" k8s-specifications/$1-deployment.yaml
+
+echo "After:"
+grep "image:" k8s-specifications/$1-deployment.yaml
+
+git add .
+git commit -m "Update Kubernetes manifest"
+git push origin HEAD:main
+
+rm -rf /tmp/temp_repo
 ```
+
+> **Note:** the PAT above is redacted. In the actual pipeline it should be pulled from a pipeline secret variable or the built-in `System.AccessToken`, never hardcoded in the script.
 
 The script updates the image in the Kubernetes Deployment.
 
@@ -233,7 +320,7 @@ After:
 image: azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
-The updated manifest is then committed and pushed back to Git.
+The updated manifest is then committed and pushed back to Git with `git push origin HEAD:main`, since the pipeline checkout leaves the repo in a detached HEAD state.
 
 ![Pipeline Update](AZ-Screens/05-pipeline-update.png)
 *(احفظ صورة الـ Terminal التي تظهر `Update Kubernetes manifest` باسم `05-pipeline-update.png`)*
@@ -435,23 +522,8 @@ Voting Application Running on AKS
 
 ## Application Components
 
-![Architecture diagram](architecture.excalidraw.png)
-
 * A front-end web app in [Python](/vote) which lets you vote between two options
 * A [Redis](https://hub.docker.com/_/redis/) which collects new votes
 * A [.NET](/worker/) worker which consumes votes and stores them in…
 * A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
 * A [Node.js](/result) web app which shows the results of the voting in real time
-  
-
-
-## Architecture
-
-![Architecture diagram](architecture.excalidraw.png)
-
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
-```
