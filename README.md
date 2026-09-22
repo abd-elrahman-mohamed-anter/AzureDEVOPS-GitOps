@@ -1,8 +1,14 @@
-# Azure DevOps GitOps Voting App
+<img width="408" height="31" alt="newimageupdate" src="https://github.com/user-attachments/assets/abf1f3f6-5d96-4d8c-8e75-8dd5c631f6c1" /><img width="1717" height="899" alt="vote-cipipline" src="https://github.com/user-attachments/assets/a3dfc8c1-30b6-49f3-9a0f-3e12fd709de1" /># Azure DevOps GitOps Voting App
 
 A simple Voting App deployed on **Azure Kubernetes Service (AKS)** with an automated CI/CD and GitOps workflow.
 
-The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app). I used it to build and practice a complete DevOps workflow using Azure DevOps, Docker, Azure Container Registry, Kubernetes, AKS, and Argo CD.
+The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app).
+I used it to build and practice a complete DevOps workflow using Azure DevOps, Docker, Azure Container Registry, Kubernetes, AKS, and Argo CD.
+
+## Architecture Overview For Voting app
+
+![Architecture diagram](architecture.excalidraw.png)
+
 
 ---
 
@@ -119,8 +125,7 @@ az acr create --resource-group <resource-group> --name azurecicdcontreg --sku Ba
 az aks update --name <aks-cluster-name> --resource-group <resource-group> --attach-acr azurecicdcontreg
 ```
 
-![Azure Container Registry](AZ-Screens/04-acr.png)
-*(احفظ صورة Azure Container Registry التي تظهر الـ Tags باسم `04-acr.png`)*
+![Azure Container Registry](AZ-Screens/az-cr.png)
 
 ---
 
@@ -193,8 +198,7 @@ stages:
         tags: '$(tag)'
 ```
 
-![Azure DevOps Repository](AZ-Screens/02-azure-devops-repository.png)
-*(احفظ صورة Azure DevOps Pipelines الرئيسية التي تظهر Recently run pipelines باسم `02-azure-devops-repository.png`)*
+![Azure DevOps Repository](AZ-Screens/vote-cipipline.png)
 
 ### Build Docker Image
 
@@ -210,9 +214,6 @@ Example:
 azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
-![Azure DevOps Build](AZ-Screens/03-pipeline-build.png)
-*(احفظ صورة الـ Pipeline التي تظهر الـ Jobs والـ Stages باسم `03-pipeline-build.png`)*
-
 ### Push Image to ACR
 
 After the build, the pipeline pushes the image to the ACR created in step 2.
@@ -225,12 +226,11 @@ Tag:        17
 
 ---
 
-# 4. Run the Pipeline
+# 4. Run the Pipeline Build & Push
 
 With the AKS cluster, ACR, and CI stages in place, the pipeline was triggered for the first time to confirm the build and push stages worked end to end before adding the Update stage.
 
-![Successful Pipeline](AZ-Screens/10-pipeline-success.png)
-*(احفظ صورة Azure DevOps Pipeline الناجحة باسم `10-pipeline-success.png`)*
+![Successful Pipeline](AZ-Screens/vote-stages.png)
 
 ---
 
@@ -315,12 +315,10 @@ image: azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
 The updated manifest is then committed and pushed back to Git with `git push origin HEAD:main`, since the pipeline checkout leaves the repo in a detached HEAD state.
-
-![Pipeline Update](AZ-Screens/05-pipeline-update.png)
-*(احفظ صورة الـ Terminal التي تظهر `Update Kubernetes manifest` باسم `05-pipeline-update.png`)*
-
-![Updated Kubernetes Manifest](AZ-Screens/06-updated-manifest.png)
-*(احفظ صورة كود الـ YAML التي تظهر `image: azurecicdcontreg.azurecr.io/voteapp:17` باسم `06-updated-manifest.png`)*
+##The Old 
+![Pipeline Update](AZ-Screens/theoldmainfast.png)
+#The New
+![Updated Kubernetes Manifest](AZ-Screens/thenewmainfast.png)
 
 ---
 
@@ -342,11 +340,7 @@ The application contains:
 
 Kubernetes Deployments and Services are used to run the application and provide communication between the different components.
 
-![AKS Pods](AZ-Screens/07-aks-pods.png)
-*(احفظ صورة الـ Terminal التي تظهر `kubectl get pods` باسم `07-aks-pods.png`)*
-
-![Kubernetes Services](AZ-Screens/08-kubernetes-services.png)
-*(احفظ صورة الـ Terminal التي تظهر `kubectl get svc` باسم `08-kubernetes-services.png`)*
+![AKS Pods](AZ-Screens/all-svc.png)
 
 ---
 
@@ -378,9 +372,12 @@ The Argo CD application should show:
 Synced
 Healthy
 ```
+## Argo Application
 
-![Argo CD Application](AZ-Screens/09-argocd.png)
-*(احفظ صورة Argo CD Applications الرئيسية التي تظهر `Synced` و `Healthy` باسم `09-argocd.png`)*
+![Argo CD Application](AZ-Screens/argo-app-interface.png)
+
+## Argo Status
+![Argo CD Application](AZ-Screens/argo-interface-resources.png)
 
 ---
 
@@ -449,9 +446,6 @@ The pipeline needed authentication to push the updated Kubernetes manifest back 
 
 Argo CD initially could not access the private Azure DevOps repository. Repository credentials were configured in Argo CD so it could read the Kubernetes manifests and synchronize the application with AKS.
 
-![Argo CD Repository Configuration](AZ-Screens/11-argocd-repository.png)
-*(احفظ صورة إعدادات Argo CD أو صورة الـ Login باسم `11-argocd-repository.png`)*
-
 ---
 
 # 10. Application
@@ -461,11 +455,9 @@ The Voting App contains two main web interfaces:
 * **Vote** — submit a vote
 * **Result** — view the voting results
 
-![Voting Application](AZ-Screens/12-voting-app.png)
-*(احفظ صورة واجهة التصويت باسم `12-voting-app.png`)*
+![Voting Application](AZ-Screens/port-fr.png)
 
-![Result Application](AZ-Screens/13-result-app.png)
-*(احفظ صورة واجهة النتائج باسم `13-result-app.png`)*
+![Result Application](AZ-Screens/app.png)
 
 ---
 
@@ -508,10 +500,6 @@ Argo CD
      v
 Voting Application Running on AKS
 ```
-
-![Running Application on AKS](AZ-Screens/14-final-application.png)
-*(احفظ صورة Argo CD التي تظهر الـ Pods وهي تعمل `Running` باسم `14-final-application.png`)*
-
 ---
 
 ## Application Components
