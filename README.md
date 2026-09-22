@@ -289,7 +289,8 @@ set -x
 
 # Set the repository URL
 # # Authenticate securely using a pipeline secret or System.AccessToken
-REPO_URL="https://<yrrepo>
+REPO_URL="https://dev.azure.com/<organization>/vote-app/_git/vote-app"
+
 # Clone the git repository
 git clone "$REPO_URL" /tmp/temp_repo
 cd /tmp/temp_repo
@@ -334,7 +335,7 @@ The updated manifest is then committed and pushed back to Git with `git push ori
 ### Image was changed
 ---
 
-# 6. Deploy to AKS
+# 6. Kubernetes Application on AKS
 
 The Kubernetes manifests are stored in:
 
@@ -492,25 +493,33 @@ Through this project, I practiced:
 # Final Result
 
 ```text
-AKS Cluster
+Code Change
+     |
+     v
+Azure DevOps
+     |
+     v
+CI Pipeline
+     |
+     +----> Build Docker Image
      |
      v
 Azure Container Registry
      |
      v
-Azure DevOps CI Pipeline
+Update Kubernetes Manifest
      |
      v
-Update Stage (K8s Manifest)
-     |
-     v
-Git
+Git Repository
      |
      v
 Argo CD
      |
      v
-Voting Application Running on AKS
+AKS
+     |
+     v
+Voting Application 
 ```
 ---
 
