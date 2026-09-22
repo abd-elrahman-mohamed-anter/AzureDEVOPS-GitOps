@@ -316,11 +316,12 @@ image: azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
 The updated manifest is then committed and pushed back to Git with `git push origin HEAD:main`, since the pipeline checkout leaves the repo in a detached HEAD state.
-##The Old 
+# The Old 
 ![Pipeline Update](AZ-Screens/theoldmainfast.png)
-#The New
+# The New
 ![Updated Kubernetes Manifest](AZ-Screens/thenewmainfast.png)
 
+### Image was changed
 ---
 
 # 6. Deploy to AKS
