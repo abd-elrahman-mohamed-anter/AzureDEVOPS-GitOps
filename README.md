@@ -95,6 +95,16 @@ Azure DevOps Pipeline
 
 ---
 
+## Application Components
+
+* A front-end web app in [Python](/vote) which lets you vote between two options
+* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
+* A [.NET](/worker/) worker which consumes votes and stores them in…
+* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
+* A [Node.js](/result) web app which shows the results of the voting in real time
+
+---
+
 # 1. Create the AKS Cluster
 
 The first step was provisioning the **Azure Kubernetes Service (AKS)** cluster that would run the application.
@@ -278,8 +288,8 @@ echo "ARG3=$3"
 set -x
 
 # Set the repository URL
-REPO_URL="https://<PAT>@dev.azure.com/<org>/vote-app/_git/vote-app"
-
+# # Authenticate securely using a pipeline secret or System.AccessToken
+REPO_URL="https://<yrrepo>
 # Clone the git repository
 git clone "$REPO_URL" /tmp/temp_repo
 cd /tmp/temp_repo
@@ -504,10 +514,3 @@ Voting Application Running on AKS
 ```
 ---
 
-## Application Components
-
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
