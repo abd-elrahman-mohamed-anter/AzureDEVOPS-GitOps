@@ -1,6 +1,3 @@
-تفضل، هذا هو ملف `README.md` كاملاً في **بلوك واحد فقط** (داخل علامات `` ```markdown ``). يمكنك نسخه بالكامل ولصقه مباشرة في ملف `README.md` على GitHub.
-
-```markdown
 # Azure DevOps GitOps Voting App
 
 A simple Voting App deployed on **Azure Kubernetes Service (AKS)** with an automated CI/CD and GitOps workflow.
@@ -63,7 +60,7 @@ Azure DevOps Pipeline
 ```
 
 ![Project Architecture](AZ-Screens/01-architecture.png)
-*(احفظ صورة Argo CD Application Details Tree أو أي صورة تعبر عن الهيكل باسم `01-architecture.png`)*
+*(احفظ صورة Argo CD Application Details Tree التي تظهر الشجرة الكاملة باسم `01-architecture.png`)*
 
 ---
 
@@ -112,7 +109,7 @@ trigger:
 ```
 
 ![Azure DevOps Repository](AZ-Screens/02-azure-devops-repository.png)
-*(احفظ صورة Azure DevOps Pipelines الرئيسية باسم `02-azure-devops-repository.png`)*
+*(احفظ صورة Azure DevOps Pipelines الرئيسية التي تظهر Recently run pipelines باسم `02-azure-devops-repository.png`)*
 
 ---
 
