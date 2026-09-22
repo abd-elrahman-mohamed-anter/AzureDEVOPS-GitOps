@@ -139,7 +139,7 @@ pool:
 ```
 ![Successful Pipeline](AZ-Screens/update+agent.png)
 
-```
+
 
 
 # 3. Create Azure Container Registry (ACR)
