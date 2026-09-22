@@ -125,8 +125,24 @@ az aks get-credentials --resource-group <resource-group> --name <aks-cluster-nam
 ![Project Architecture](AZ-Screens/cluster.png)
 
 ---
+# 2. Self-Hosted Agent
 
-# 2. Create Azure Container Registry (ACR)
+The Azure DevOps pipeline runs on a **self-hosted Linux agent** instead of a Microsoft-hosted agent.
+
+The agent is configured in Azure DevOps and is used to execute the pipeline jobs, including Docker image building, pushing images to Azure Container Registry, and running Bash automation scripts.
+
+The pipeline uses the following agent pool:
+
+```yaml
+pool:
+  name: 'myazureagent'
+```
+![Successful Pipeline](AZ-Screens/update+agent.png)
+
+```
+
+
+# 3. Create Azure Container Registry (ACR)
 
 Next, **Azure Container Registry** was created to store the Docker images built by the pipeline, and attached to the AKS cluster so it can pull images from it.
 
@@ -140,7 +156,7 @@ az aks update --name <aks-cluster-name> --resource-group <resource-group> --atta
 
 ---
 
-# 3. Azure DevOps Repository & CI Pipeline
+# 4. Azure DevOps Repository & CI Pipeline
 
 The source code is stored in an Azure DevOps Git repository.
 
@@ -237,15 +253,14 @@ Tag:        17
 
 ---
 
-# 4. Run the Pipeline Build & Push
+# 5. Run the Pipeline Build & Push
 
 With the AKS cluster, ACR, and CI stages in place, the pipeline was triggered for the first time to confirm the build and push stages worked end to end before adding the Update stage.
 
 ![Successful Pipeline](AZ-Screens/vote-stages.png)
-
 ---
 
-# 5. Update Stage — Update Kubernetes Manifest
+# 6. Update Stage — Update Kubernetes Manifest
 
 After the pipeline was confirmed working, the **Update** stage was added, depending on the `Push` stage:
 
@@ -335,7 +350,7 @@ The updated manifest is then committed and pushed back to Git with `git push ori
 ### Image was changed
 ---
 
-# 6. Kubernetes Application on AKS
+# 7. Kubernetes Application on AKS
 
 The Kubernetes manifests are stored in:
 
@@ -357,7 +372,7 @@ Kubernetes Deployments and Services are used to run the application and provide 
 
 ---
 
-# 7. GitOps with Argo CD
+# 8. GitOps with Argo CD
 
 Argo CD is used for the GitOps part of the project.
 
@@ -394,7 +409,7 @@ Healthy
 
 ---
 
-# 8. Full CI/CD Flow
+# 9. Full CI/CD Flow
 
 ```text
 Code Change
@@ -423,7 +438,7 @@ AKS
 
 ---
 
-# 9. Troubleshooting
+# 10. Troubleshooting
 
 ## Bash Script Line Endings
 
@@ -461,7 +476,7 @@ Argo CD initially could not access the private Azure DevOps repository. Reposito
 
 ---
 
-# 10. Application
+# 11. Application
 
 The Voting App contains two main web interfaces:
 
