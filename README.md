@@ -2,7 +2,7 @@
 
 A simple Voting App deployed on **Azure Kubernetes Service (AKS)** with an automated CI/CD and GitOps workflow.
 
-The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app). I used the application to build and practice a complete DevOps workflow using Azure DevOps, Docker, Azure Container Registry, Kubernetes, AKS, and Argo CD.
+The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app). I used it to build and practice a complete DevOps workflow using Azure DevOps, Docker, Azure Container Registry, Kubernetes, AKS, and Argo CD.
 
 ---
 
@@ -10,17 +10,27 @@ The application is based on the [Example Voting App](https://github.com/dockersa
 
 The project includes:
 
+* Azure Kubernetes Service (AKS) cluster
+* Azure Container Registry (ACR)
 * Azure DevOps Git repository
 * Azure DevOps CI pipeline
 * Docker image build and versioning
-* Azure Container Registry (ACR)
 * Kubernetes manifests
-* Azure Kubernetes Service (AKS)
 * Argo CD for GitOps
 * Bash automation
 * Redis and PostgreSQL
 
 The main goal was to automate the process from **code change to application deployment**.
+
+Build order followed in this project:
+
+```text
+1. Create AKS cluster
+2. Create ACR (and connect it to AKS)
+3. Set up Azure DevOps CI pipeline (build + push image)
+4. Run the pipeline
+5. Add the Update stage (update K8s manifest + GitOps sync via Argo CD)
+```
 
 ---
 
@@ -66,9 +76,9 @@ Azure DevOps Pipeline
 
 ## Technologies Used
 
-* Azure DevOps
-* Azure Container Registry (ACR)
 * Azure Kubernetes Service (AKS)
+* Azure Container Registry (ACR)
+* Azure DevOps
 * Kubernetes
 * Argo CD
 * Docker
@@ -82,7 +92,45 @@ Azure DevOps Pipeline
 
 ---
 
-# 1. Azure DevOps Repository
+# 1. Create the AKS Cluster
+
+The first step was provisioning the **Azure Kubernetes Service (AKS)** cluster that would run the application.
+
+```text
+az aks create \
+  --resource-group <resource-group> \
+  --name <aks-cluster-name> \
+  --node-count 2 \
+  --generate-ssh-keys
+```
+
+Connected to the cluster with:
+
+```bash
+az aks get-credentials --resource-group <resource-group> --name <aks-cluster-name>
+```
+
+![AKS Cluster](AZ-Screens/00-aks-cluster.png)
+*(احفظ صورة الـ AKS Cluster من Azure Portal باسم `00-aks-cluster.png`)*
+
+---
+
+# 2. Create Azure Container Registry (ACR)
+
+Next, **Azure Container Registry** was created to store the Docker images built by the pipeline, and attached to the AKS cluster so it can pull images from it.
+
+```bash
+az acr create --resource-group <resource-group> --name azurecicdcontreg --sku Basic
+
+az aks update --name <aks-cluster-name> --resource-group <resource-group> --attach-acr azurecicdcontreg
+```
+
+![Azure Container Registry](AZ-Screens/04-acr.png)
+*(احفظ صورة Azure Container Registry التي تظهر الـ Tags باسم `04-acr.png`)*
+
+---
+
+# 3. Azure DevOps Repository & CI Pipeline
 
 The source code is stored in an Azure DevOps Git repository.
 
@@ -111,59 +159,47 @@ trigger:
 ![Azure DevOps Repository](AZ-Screens/02-azure-devops-repository.png)
 *(احفظ صورة Azure DevOps Pipelines الرئيسية التي تظهر Recently run pipelines باسم `02-azure-devops-repository.png`)*
 
----
+### Build Docker Image
 
-# 2. Build Docker Image
-
-The first stage of the pipeline builds the Docker image for the Vote application.
-
-The image is tagged using the Azure DevOps Build ID:
+The CI pipeline builds the Docker image for the Vote application and tags it with the Azure DevOps Build ID:
 
 ```text
-$(Build.BuildId)
+azurecicdcontreg.azurecr.io/voteapp:$(Build.BuildId)
 ```
 
-For example:
+Example:
 
 ```text
 azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
-This makes it easy to identify which pipeline run produced a specific image.
-
 ![Azure DevOps Build](AZ-Screens/03-pipeline-build.png)
 *(احفظ صورة الـ Pipeline التي تظهر الـ Jobs والـ Stages باسم `03-pipeline-build.png`)*
 
----
+### Push Image to ACR
 
-# 3. Push Image to Azure Container Registry
-
-After the image is built, the pipeline pushes it to **Azure Container Registry**.
+After the build, the pipeline pushes the image to the ACR created in step 2.
 
 ```text
-Registry:
-azurecicdcontreg.azurecr.io
-
-Repository:
-voteapp
+Registry:   azurecicdcontreg.azurecr.io
+Repository: voteapp
+Tag:        17
 ```
-
-The same image tag is used in ACR.
-
-Example:
-
-```text
-voteapp:17
-```
-
-![Azure Container Registry](AZ-Screens/04-acr.png)
-*(احفظ صورة Azure Container Registry التي تظهر الـ Tags باسم `04-acr.png`)*
 
 ---
 
-# 4. Update Kubernetes Manifest
+# 4. Run the Pipeline
 
-After pushing the image, the pipeline runs the Bash script:
+With the AKS cluster, ACR, and CI stages in place, the pipeline was triggered for the first time to confirm the build and push stages worked end to end before adding the Update stage.
+
+![Successful Pipeline](AZ-Screens/10-pipeline-success.png)
+*(احفظ صورة Azure DevOps Pipeline الناجحة باسم `10-pipeline-success.png`)*
+
+---
+
+# 5. Update Stage — Update Kubernetes Manifest
+
+After the pipeline was confirmed working, the **Update** stage was added. It runs the Bash script:
 
 ```text
 scripts/updateK8sManifests.sh
@@ -172,12 +208,12 @@ scripts/updateK8sManifests.sh
 The script receives three arguments:
 
 ```text
-$1 = application name
-$2 = image repository
-$3 = image tag
+$1 = application name    (vote)
+$2 = image repository    (voteapp)
+$3 = image tag           (Build.BuildId)
 ```
 
-Example:
+Example call:
 
 ```text
 vote voteapp 17
@@ -207,15 +243,13 @@ The updated manifest is then committed and pushed back to Git.
 
 ---
 
-# 5. Deploy to AKS
+# 6. Deploy to AKS
 
 The Kubernetes manifests are stored in:
 
 ```text
 k8s-specifications/
 ```
-
-The application is deployed to **Azure Kubernetes Service (AKS)**.
 
 The application contains:
 
@@ -235,13 +269,11 @@ Kubernetes Deployments and Services are used to run the application and provide 
 
 ---
 
-# 6. GitOps with Argo CD
+# 7. GitOps with Argo CD
 
 Argo CD is used for the GitOps part of the project.
 
-The Kubernetes manifests stored in Git are treated as the desired state.
-
-When the pipeline updates the image tag in Git, Argo CD detects the change and synchronizes it with the AKS cluster.
+The Kubernetes manifests stored in Git are treated as the desired state. When the pipeline updates the image tag in Git, Argo CD detects the change and synchronizes it with the AKS cluster.
 
 ```text
 New Image
@@ -271,9 +303,7 @@ Healthy
 
 ---
 
-# 7. CI/CD Flow
-
-The complete workflow is:
+# 8. Full CI/CD Flow
 
 ```text
 Code Change
@@ -300,65 +330,50 @@ Argo CD
 AKS
 ```
 
-![Successful Pipeline](AZ-Screens/10-pipeline-success.png)
-*(احفظ صورة Azure DevOps Pipeline الناجحة باسم `10-pipeline-success.png`)*
-
 ---
 
-# 8. Troubleshooting
-
-During the implementation, I faced and resolved several issues.
+# 9. Troubleshooting
 
 ## Bash Script Line Endings
 
-The Bash script had Windows `CRLF` line endings when running on the Linux agent.
+The Bash script had Windows `CRLF` line endings when running on the Linux agent, causing errors like `set: -\r: invalid option` and `$'\r': command not found`.
 
-I converted the file to Linux `LF` format:
+Fixed by converting the file to Linux `LF` format:
 
 ```bash
 sed -i 's/\r$//' scripts/updateK8sManifests.sh
 ```
 
----
+To prevent this from recurring, a `.gitattributes` entry was added:
+
+```text
+*.sh text eol=lf
+```
 
 ## Git Detached HEAD
 
-The Azure DevOps pipeline checkout was running in a detached HEAD state.
-
-Because of this, pushing directly to the branch caused an error.
-
-I used:
+The Azure DevOps pipeline checkout was running in a detached HEAD state, so pushing directly to the branch caused an error. Fixed with:
 
 ```bash
 git push origin HEAD:main
 ```
 
-to push the updated commit to the `main` branch.
-
----
-
 ## Git Authentication
 
 The pipeline needed authentication to push the updated Kubernetes manifest back to the private Azure DevOps repository.
 
-Git authentication was configured for the pipeline.
-
 > **Note:** Personal Access Tokens and other credentials should never be committed to Git or exposed in pipeline logs.
-
----
 
 ## Argo CD Repository Authentication
 
-Argo CD initially could not access the private Azure DevOps repository.
-
-I configured the repository credentials in Argo CD so it could read the Kubernetes manifests and synchronize the application with AKS.
+Argo CD initially could not access the private Azure DevOps repository. Repository credentials were configured in Argo CD so it could read the Kubernetes manifests and synchronize the application with AKS.
 
 ![Argo CD Repository Configuration](AZ-Screens/11-argocd-repository.png)
 *(احفظ صورة إعدادات Argo CD أو صورة الـ Login باسم `11-argocd-repository.png`)*
 
 ---
 
-# 9. Application
+# 10. Application
 
 The Voting App contains two main web interfaces:
 
@@ -377,34 +392,31 @@ The Voting App contains two main web interfaces:
 
 Through this project, I practiced:
 
+* Provisioning an AKS cluster and attaching an ACR to it
 * Building CI pipelines with Azure DevOps
 * Docker image building and tagging
-* Working with Azure Container Registry
 * Deploying applications to AKS
 * Kubernetes Deployments and Services
 * GitOps with Argo CD
 * Bash scripting and automation
-* Git workflows
-* Private Git repository authentication
-* Troubleshooting CI/CD issues
+* Git workflows and private repository authentication
+* Troubleshooting CI/CD issues (line endings, detached HEAD, auth)
 
 ---
 
 # Final Result
 
-The final workflow connects Azure DevOps, ACR, Kubernetes, AKS, and Argo CD:
-
 ```text
-Azure DevOps
-     |
-     v
-Docker Build
+AKS Cluster
      |
      v
 Azure Container Registry
      |
      v
-Kubernetes Manifest
+Azure DevOps CI Pipeline
+     |
+     v
+Update Stage (K8s Manifest)
      |
      v
 Git
@@ -413,15 +425,24 @@ Git
 Argo CD
      |
      v
-AKS
-     |
-     v
-Voting Application
+Voting Application Running on AKS
 ```
 
 ![Running Application on AKS](AZ-Screens/14-final-application.png)
 *(احفظ صورة Argo CD التي تظهر الـ Pods وهي تعمل `Running` باسم `14-final-application.png`)*
 
+---
+
+## Application Components
+
+![Architecture diagram](architecture.excalidraw.png)
+
+* A front-end web app in [Python](/vote) which lets you vote between two options
+* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
+* A [.NET](/worker/) worker which consumes votes and stores them in…
+* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
+* A [Node.js](/result) web app which shows the results of the voting in real time
+  
 
 
 ## Architecture
