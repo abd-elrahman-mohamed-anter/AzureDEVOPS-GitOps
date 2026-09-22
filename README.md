@@ -1,4 +1,4 @@
-<img width="408" height="31" alt="newimageupdate" src="https://github.com/user-attachments/assets/abf1f3f6-5d96-4d8c-8e75-8dd5c631f6c1" /><img width="1717" height="899" alt="vote-cipipline" src="https://github.com/user-attachments/assets/a3dfc8c1-30b6-49f3-9a0f-3e12fd709de1" /># Azure DevOps GitOps Voting App
+# Azure DevOps GitOps Voting App
 
 A simple Voting App deployed on **Azure Kubernetes Service (AKS)** with an automated CI/CD and GitOps workflow.
 
