@@ -74,7 +74,7 @@ Azure DevOps Pipeline
       |       |       |       |       |
      Vote   Worker  Result  Redis  PostgreSQL
 ```
-![Architecture diagram](architecture.excalidraw.png)
+![Architecture diagram](AZ-Screens/architecture-detailed.png)
 ---
 
 ## Technologies Used
@@ -113,6 +113,7 @@ Connected to the cluster with:
 az aks get-credentials --resource-group <resource-group> --name <aks-cluster-name>
 ```
 ![Project Architecture](AZ-Screens/cluster.png)
+
 ---
 
 # 2. Create Azure Container Registry (ACR)
