@@ -69,8 +69,7 @@ Azure DevOps Pipeline
      Vote   Worker  Result  Redis  PostgreSQL
 ```
 
-![Project Architecture](AZ-Screens/01-architecture.png)
-*(احفظ صورة Argo CD Application Details Tree التي تظهر الشجرة الكاملة باسم `01-architecture.png`)*
+![Project Architecture](AZ-Screens/cluster.png)
 
 ---
 
