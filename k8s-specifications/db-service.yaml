@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: db
-  name: db
+    app: mydb
+  name: mydb
 spec:
   type: ClusterIP
   ports:
@@ -11,5 +11,5 @@ spec:
     port: 5432
     targetPort: 5432
   selector:
-    app: db
+    app: mydb
   
