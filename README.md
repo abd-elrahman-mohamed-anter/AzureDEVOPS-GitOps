@@ -74,7 +74,7 @@ Azure DevOps Pipeline
       |       |       |       |       |
      Vote   Worker  Result  Redis  PostgreSQL
 ```
-![Architecture diagram](AZ-Screens/architecture-detailed.png)
+![Architecture diagram](AZ-Screens/arcticture-detailed1.png)
 ---
 
 ## Technologies Used
