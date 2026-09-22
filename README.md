@@ -407,6 +407,9 @@ Healthy
 ## Argo Status
 ![Argo CD Application](AZ-Screens/argo-interface-resources.png)
 
+## Argo after changes
+![Argo CD Application](AZ-Screens/updatest-argoint.png)
+
 ---
 
 # 9. Full CI/CD Flow
