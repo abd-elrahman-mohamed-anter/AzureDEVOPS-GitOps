@@ -1,8 +1,11 @@
+تفضل، هذا هو ملف `README.md` كاملاً في **بلوك واحد فقط** (داخل علامات `` ```markdown ``). يمكنك نسخه بالكامل ولصقه مباشرة في ملف `README.md` على GitHub.
+
+```markdown
 # Azure DevOps GitOps Voting App
 
 A simple Voting App deployed on **Azure Kubernetes Service (AKS)** with an automated CI/CD and GitOps workflow.
 
-The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app). I used the application to build and practice a complete DevOps workflow using Azure DevOps, Docker, ACR, Kubernetes, AKS, and Argo CD.
+The application is based on the [Example Voting App](https://github.com/dockersamples/example-voting-app). I used the application to build and practice a complete DevOps workflow using Azure DevOps, Docker, Azure Container Registry, Kubernetes, AKS, and Argo CD.
 
 ---
 
@@ -12,14 +15,15 @@ The project includes:
 
 * Azure DevOps Git repository
 * Azure DevOps CI pipeline
-* Docker image build
+* Docker image build and versioning
 * Azure Container Registry (ACR)
 * Kubernetes manifests
 * Azure Kubernetes Service (AKS)
 * Argo CD for GitOps
-* Bash script for updating Kubernetes manifests
+* Bash automation
+* Redis and PostgreSQL
 
-The main goal was to automate the process of building the application, pushing the Docker image, updating the Kubernetes manifest, and deploying the new version to AKS.
+The main goal was to automate the process from **code change to application deployment**.
 
 ---
 
@@ -53,18 +57,13 @@ Azure DevOps Pipeline
               v
              AKS
               |
-      +-------+-------+
-      |       |       |
-     Vote   Worker  Result
-              |
-            Redis
-              |
-          PostgreSQL
+      +-------+-------+-------+-------+
+      |       |       |       |       |
+     Vote   Worker  Result  Redis  PostgreSQL
 ```
 
-### Architecture Screenshot
-
-**[SCREENSHOT 1 — Project Architecture]**
+![Project Architecture](AZ-Screens/01-architecture.png)
+*(احفظ صورة Argo CD Application Details Tree أو أي صورة تعبر عن الهيكل باسم `01-architecture.png`)*
 
 ---
 
@@ -112,9 +111,8 @@ trigger:
       - vote/*
 ```
 
-### Screenshot
-
-**[SCREENSHOT 2 — Azure DevOps Repository]**
+![Azure DevOps Repository](AZ-Screens/02-azure-devops-repository.png)
+*(احفظ صورة Azure DevOps Pipelines الرئيسية باسم `02-azure-devops-repository.png`)*
 
 ---
 
@@ -134,17 +132,16 @@ For example:
 azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
-This makes it easy to know which pipeline run produced a specific image.
+This makes it easy to identify which pipeline run produced a specific image.
 
-### Screenshot
-
-**[SCREENSHOT 3 — Azure DevOps Build Stage]**
+![Azure DevOps Build](AZ-Screens/03-pipeline-build.png)
+*(احفظ صورة الـ Pipeline التي تظهر الـ Jobs والـ Stages باسم `03-pipeline-build.png`)*
 
 ---
 
-# 3. Push Image to ACR
+# 3. Push Image to Azure Container Registry
 
-After the image is built, the pipeline pushes it to Azure Container Registry.
+After the image is built, the pipeline pushes it to **Azure Container Registry**.
 
 ```text
 Registry:
@@ -154,7 +151,7 @@ Repository:
 voteapp
 ```
 
-The image tag is kept the same between the pipeline and ACR.
+The same image tag is used in ACR.
 
 Example:
 
@@ -162,21 +159,20 @@ Example:
 voteapp:17
 ```
 
-### Screenshot
-
-**[SCREENSHOT 4 — Azure Container Registry Showing voteapp:17]**
+![Azure Container Registry](AZ-Screens/04-acr.png)
+*(احفظ صورة Azure Container Registry التي تظهر الـ Tags باسم `04-acr.png`)*
 
 ---
 
 # 4. Update Kubernetes Manifest
 
-After pushing the image, the pipeline runs a Bash script:
+After pushing the image, the pipeline runs the Bash script:
 
 ```text
 scripts/updateK8sManifests.sh
 ```
 
-The script takes three arguments:
+The script receives three arguments:
 
 ```text
 $1 = application name
@@ -190,7 +186,7 @@ Example:
 vote voteapp 17
 ```
 
-The script updates the image inside the Kubernetes deployment.
+The script updates the image in the Kubernetes Deployment.
 
 Before:
 
@@ -204,13 +200,13 @@ After:
 image: azurecicdcontreg.azurecr.io/voteapp:17
 ```
 
-The updated manifest is then committed and pushed to Git.
+The updated manifest is then committed and pushed back to Git.
 
-### Screenshot
+![Pipeline Update](AZ-Screens/05-pipeline-update.png)
+*(احفظ صورة الـ Terminal التي تظهر `Update Kubernetes manifest` باسم `05-pipeline-update.png`)*
 
-**[SCREENSHOT 5 — Pipeline Update Stage]**
-
-**[SCREENSHOT 6 — Updated Kubernetes Manifest in Git]**
+![Updated Kubernetes Manifest](AZ-Screens/06-updated-manifest.png)
+*(احفظ صورة كود الـ YAML التي تظهر `image: azurecicdcontreg.azurecr.io/voteapp:17` باسم `06-updated-manifest.png`)*
 
 ---
 
@@ -222,43 +218,27 @@ The Kubernetes manifests are stored in:
 k8s-specifications/
 ```
 
-The application is deployed to Azure Kubernetes Service.
+The application is deployed to **Azure Kubernetes Service (AKS)**.
 
-The application contains several components:
+The application contains:
 
-```text
-Vote
-Result
-Worker
-Redis
-PostgreSQL
-```
+* Vote
+* Result
+* Worker
+* Redis
+* PostgreSQL
 
-I used Kubernetes Deployments and Services to run the application and allow the components to communicate with each other.
+Kubernetes Deployments and Services are used to run the application and provide communication between the different components.
 
-### Screenshot
+![AKS Pods](AZ-Screens/07-aks-pods.png)
+*(احفظ صورة الـ Terminal التي تظهر `kubectl get pods` باسم `07-aks-pods.png`)*
 
-**[SCREENSHOT 7 — AKS / kubectl get pods]**
-
-Example:
-
-```bash
-kubectl get pods
-```
-
-### Screenshot
-
-**[SCREENSHOT 8 — Kubernetes Services]**
-
-Example:
-
-```bash
-kubectl get svc
-```
+![Kubernetes Services](AZ-Screens/08-kubernetes-services.png)
+*(احفظ صورة الـ Terminal التي تظهر `kubectl get svc` باسم `08-kubernetes-services.png`)*
 
 ---
 
-# 6. Argo CD
+# 6. GitOps with Argo CD
 
 Argo CD is used for the GitOps part of the project.
 
@@ -282,16 +262,15 @@ Argo CD
 AKS
 ```
 
-### Screenshot
-
-**[SCREENSHOT 9 — Argo CD Application]**
-
-Show:
+The Argo CD application should show:
 
 ```text
 Synced
 Healthy
 ```
+
+![Argo CD Application](AZ-Screens/09-argocd.png)
+*(احفظ صورة Argo CD Applications الرئيسية التي تظهر `Synced` و `Healthy` باسم `09-argocd.png`)*
 
 ---
 
@@ -324,17 +303,16 @@ Argo CD
 AKS
 ```
 
-### Screenshot
-
-**[SCREENSHOT 10 — Successful Azure DevOps Pipeline]**
+![Successful Pipeline](AZ-Screens/10-pipeline-success.png)
+*(احفظ صورة Azure DevOps Pipeline الناجحة باسم `10-pipeline-success.png`)*
 
 ---
 
 # 8. Troubleshooting
 
-While working on the project, I faced some issues during the implementation.
+During the implementation, I faced and resolved several issues.
 
-### Bash Script Line Endings
+## Bash Script Line Endings
 
 The Bash script had Windows `CRLF` line endings when running on the Linux agent.
 
@@ -346,11 +324,11 @@ sed -i 's/\r$//' scripts/updateK8sManifests.sh
 
 ---
 
-### Git Detached HEAD
+## Git Detached HEAD
 
-The pipeline checkout was running in a detached HEAD state.
+The Azure DevOps pipeline checkout was running in a detached HEAD state.
 
-Because of that, pushing directly to the branch caused an error.
+Because of this, pushing directly to the branch caused an error.
 
 I used:
 
@@ -362,25 +340,24 @@ to push the updated commit to the `main` branch.
 
 ---
 
-### Git Authentication
+## Git Authentication
 
-The pipeline needed authentication to push the updated Kubernetes manifest back to the private repository.
+The pipeline needed authentication to push the updated Kubernetes manifest back to the private Azure DevOps repository.
 
-I configured Git authentication for the pipeline.
+Git authentication was configured for the pipeline.
 
-**Important:** credentials and Personal Access Tokens should not be stored directly in the source code or exposed in pipeline logs.
+> **Note:** Personal Access Tokens and other credentials should never be committed to Git or exposed in pipeline logs.
 
 ---
 
-### Argo CD Authentication
+## Argo CD Repository Authentication
 
 Argo CD initially could not access the private Azure DevOps repository.
 
-I configured the repository credentials in Argo CD so it could access the manifests and synchronize the application with AKS.
+I configured the repository credentials in Argo CD so it could read the Kubernetes manifests and synchronize the application with AKS.
 
-### Screenshot
-
-**[SCREENSHOT 11 — Argo CD Repository Configuration]**
+![Argo CD Repository Configuration](AZ-Screens/11-argocd-repository.png)
+*(احفظ صورة إعدادات Argo CD أو صورة الـ Login باسم `11-argocd-repository.png`)*
 
 ---
 
@@ -391,13 +368,11 @@ The Voting App contains two main web interfaces:
 * **Vote** — submit a vote
 * **Result** — view the voting results
 
-### Screenshot
+![Voting Application](AZ-Screens/12-voting-app.png)
+*(احفظ صورة واجهة التصويت باسم `12-voting-app.png`)*
 
-**[SCREENSHOT 12 — Voting Application]**
-
-### Screenshot
-
-**[SCREENSHOT 13 — Result Application]**
+![Result Application](AZ-Screens/13-result-app.png)
+*(احفظ صورة واجهة النتائج باسم `13-result-app.png`)*
 
 ---
 
@@ -411,10 +386,10 @@ Through this project, I practiced:
 * Deploying applications to AKS
 * Kubernetes Deployments and Services
 * GitOps with Argo CD
-* Bash scripting
-* Git automation
+* Bash scripting and automation
+* Git workflows
+* Private Git repository authentication
 * Troubleshooting CI/CD issues
-* Working with private Git repositories
 
 ---
 
@@ -447,9 +422,9 @@ AKS
 Voting Application
 ```
 
-### Final Application Screenshot
-
-**[SCREENSHOT 14 — Running Voting Application on AKS]**
+![Running Application on AKS](AZ-Screens/14-final-application.png)
+*(احفظ صورة Argo CD التي تظهر الـ Pods وهي تعمل `Running` باسم `14-final-application.png`)*
+```
 
 
 ## Architecture
