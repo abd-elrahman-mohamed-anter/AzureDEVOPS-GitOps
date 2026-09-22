@@ -99,7 +99,7 @@ Azure DevOps Pipeline
 
 * A front-end web app in [Python](/vote) which lets you vote between two options
 * A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
+* A [.NET](/worker/) worker which consumes votes and stores the results in PostgreSQL
 * A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
 * A [Node.js](/result) web app which shows the results of the voting in real time
 
@@ -303,7 +303,7 @@ echo "ARG3=$3"
 set -x
 
 # Set the repository URL
-# # Authenticate securely using a pipeline secret or System.AccessToken
+# Authenticate securely using a pipeline secret or System.AccessToken
 REPO_URL="https://dev.azure.com/<organization>/vote-app/_git/vote-app"
 
 # Clone the git repository
